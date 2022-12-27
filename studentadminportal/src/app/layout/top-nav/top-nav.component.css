@@ -1,0 +1,9 @@
+.mat-mdc-button-base {
+  margin-right: 1em;
+}
+
+.container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
