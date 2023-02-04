@@ -19,7 +19,7 @@ export class ViewStudentComponent implements OnInit {
     lastName: '',
     dateOfBirth: '',
     email: '',
-    mobile: 1,
+    mobile: +84,
     genderId: '',
     gender: {
       id: '',
@@ -33,6 +33,8 @@ export class ViewStudentComponent implements OnInit {
     profileImageUrl: '',
   };
   genderList: Gender[] = [];
+  isNewStudent = false;
+  header = '';
   constructor(
     private readonly studentService: StudentService,
     private readonly route: ActivatedRoute,
@@ -45,33 +47,42 @@ export class ViewStudentComponent implements OnInit {
     this.route.paramMap.subscribe(
       (params) => {
         this.studentId = params.get('id');
+
         if (this.studentId) {
-          this.studentService.getStudent(this.studentId).subscribe(
-            (successRespone) => {
-              console.log('get student successRespone ===>', successRespone);
-              this.student = successRespone;
-            },
-            (errorRespone) => {
-              console.log(errorRespone);
-            }
-          );
+          if (
+            this.studentId?.toLocaleLowerCase() === 'Add'.toLocaleLowerCase()
+          ) {
+            // -->  new student functionality
+            this.isNewStudent = true;
+            this.header = 'Add New Student';
+          } else {
+            // existing student functionality
+            this.isNewStudent = false;
+            this.header = 'Edit Student';
+
+            this.studentService.getStudent(this.studentId).subscribe(
+              (successRespone) => {
+                this.student = successRespone;
+              },
+              (errorRespone) => {
+                console.log(errorRespone);
+              }
+            );
+          }
         }
+        this.genderService.getGenderList().subscribe((successRespone) => {
+          this.genderList = successRespone;
+        });
       },
       (errorParams) => {
         console.log(errorParams);
       }
     );
-
-    this.genderService.getGenderList().subscribe((successRespone) => {
-      console.log(successRespone);
-      this.genderList = successRespone;
-    });
   }
   onUpdateStudent(): void {
     // call student service to update the student
     this.studentService.updateStudent(this.student.id, this.student).subscribe(
       (successResponse) => {
-        console.log(successResponse);
         // show a notification
         this.snackbar.open('Student updated successfully', undefined, {
           duration: 2000,
@@ -87,11 +98,26 @@ export class ViewStudentComponent implements OnInit {
     this.studentService.deleteStudent(this.student.id).subscribe(
       (successResponse) => {
         this.snackbar.open('Student deleted successfully', undefined, {
-          duration: 2000
+          duration: 2000,
         });
         setTimeout(() => {
-          this.router.navigateByUrl('students')
-        }, 1500)
+          this.router.navigateByUrl('students');
+        }, 1500);
+      },
+      (errorResponse) => {
+        // log it
+      }
+    );
+  }
+  onAdd(): void {
+    this.studentService.addStudent(this.student).subscribe(
+      (successResponse) => {
+        this.snackbar.open('Add New Student successfully', undefined, {
+          duration: 2000,
+        });
+        setTimeout(() => {
+          this.router.navigateByUrl(`students/${this.student.id}`);
+        }, 1500);
       },
       (errorResponse) => {
         // log it
