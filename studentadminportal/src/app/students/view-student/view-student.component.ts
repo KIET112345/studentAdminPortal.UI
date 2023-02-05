@@ -35,6 +35,7 @@ export class ViewStudentComponent implements OnInit {
   genderList: Gender[] = [];
   isNewStudent = false;
   header = '';
+  displayProfileImageUrl = '';
   constructor(
     private readonly studentService: StudentService,
     private readonly route: ActivatedRoute,
@@ -55,6 +56,7 @@ export class ViewStudentComponent implements OnInit {
             // -->  new student functionality
             this.isNewStudent = true;
             this.header = 'Add New Student';
+            this.setImage();
           } else {
             // existing student functionality
             this.isNewStudent = false;
@@ -63,15 +65,18 @@ export class ViewStudentComponent implements OnInit {
             this.studentService.getStudent(this.studentId).subscribe(
               (successRespone) => {
                 this.student = successRespone;
+                this.setImage();
               },
               (errorRespone) => {
                 console.log(errorRespone);
+                this.setImage();
               }
             );
           }
         }
         this.genderService.getGenderList().subscribe((successRespone) => {
-          this.genderList = successRespone;
+          var other = successRespone.splice(1,1);
+          this.genderList = successRespone.concat(other[0]);
         });
       },
       (errorParams) => {
@@ -124,4 +129,34 @@ export class ViewStudentComponent implements OnInit {
       }
     );
   }
+
+  uploadImage(event: any): void {
+    console.log('uploadImage running');
+    if (this.student.id) {
+      const file: File = event.target.files[0];
+      this.studentService.uploadImage(this.student.id, file).subscribe(
+        (successResponse) => {
+          this.student.profileImageUrl = successResponse;
+          this.setImage();
+          this.snackbar.open('Profile Image Updated', undefined, {
+            duration: 2000,
+          });
+        },
+        (errorRespone) => {
+
+        }
+      );
+    }
+  }
+
+  private setImage(): void {
+    if (this.student.profileImageUrl) {
+      // fetch the image by url
+      this.displayProfileImageUrl = this.studentService.getImagePath(this.student.profileImageUrl);
+    } else {
+      // display the default image
+      this.displayProfileImageUrl = '/assets/images/user.png';
+    }
+  }
+
 }
